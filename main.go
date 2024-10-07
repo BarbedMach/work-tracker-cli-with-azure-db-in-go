@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/microsoft/go-mssqldb"
 )
@@ -56,7 +57,16 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	workItemSchema, err := os.ReadFile("schemas/work_item.sql")
+	var workItemSchema string = `IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'WorkItem')
+		BEGIN
+			CREATE TABLE WorkItem (
+				id INT IDENTITY(1,1) PRIMARY KEY,
+				workDate DATE NOT NULL,
+				startTime TIME NOT NULL,
+				endTime TIME NOT NULL,
+				description NVARCHAR(255)
+			)
+		END`
 
 	if err != nil {
 		log.Fatal("Error reading schema file: ", err.Error())
@@ -72,7 +82,7 @@ func main() {
 	deleteCmdCommand := flag.NewFlagSet("delete", flag.ExitOnError)
 	listCmdCommand := flag.NewFlagSet("list", flag.ExitOnError)
 
-	workItemDate := addCmdCommand.String("d", "", "Work date (YYYY-MM-DD)")
+	workItemDate := addCmdCommand.String("d", "", "Work date (YYYY-MM-DD) or TODAY")
 	workItemStartTime := addCmdCommand.String("st", "", "Start time (HH:MM:SS)")
 	workItemEndTime := addCmdCommand.String("et", "", "End time (HH:MM:SS)")
 	workItemDescription := addCmdCommand.String("desc", "", "Description of the work item")
@@ -99,6 +109,12 @@ func main() {
 		if *workItemDate == "" || *workItemStartTime == "" || *workItemEndTime == "" || *workItemDescription == "" {
 			fmt.Println("All fields are required for adding a work item.")
 			os.Exit(1)
+		}
+
+		if *workItemDate == "TODAY" {
+			currentTime := time.Now()
+			currentDate := currentTime.Format("2006-01-02")
+			*workItemDate = currentDate
 		}
 
 		_, err := db.ExecContext(ctx, "INSERT INTO WorkItem (workDate, startTime, endTime, description) VALUES (@p1, @p2, @p3, @p4)",
