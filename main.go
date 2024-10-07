@@ -72,10 +72,10 @@ func main() {
 	deleteCmdCommand := flag.NewFlagSet("delete", flag.ExitOnError)
 	listCmdCommand := flag.NewFlagSet("list", flag.ExitOnError)
 
-	workItemDate := addCmdCommand.String("date", "", "Work date (YYYY-MM-DD)")
-	workItemStartTime := addCmdCommand.String("start", "", "Start time (HH:MM:SS)")
-	workItemEndTime := addCmdCommand.String("end", "", "End time (HH:MM:SS)")
-	workItemDescription := addCmdCommand.String("description", "", "Description of the work item")
+	workItemDate := addCmdCommand.String("d", "", "Work date (YYYY-MM-DD)")
+	workItemStartTime := addCmdCommand.String("st", "", "Start time (HH:MM:SS)")
+	workItemEndTime := addCmdCommand.String("et", "", "End time (HH:MM:SS)")
+	workItemDescription := addCmdCommand.String("desc", "", "Description of the work item")
 
 	workItemID := deleteCmdCommand.String("id", "", "Id (n)")
 
@@ -135,7 +135,6 @@ func main() {
 
 		defer rows.Close()
 
-		var workItems []WorkItem
 		for rows.Next() {
 			var item WorkItem
 
@@ -143,15 +142,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			workItems = append(workItems, item)
+			fmt.Printf("%d - Date: %s  Start: %s  End: %s  Desc: %s\n", item.ID, item.WorkDate, item.StartTime, item.EndTime, item.Description)
 		}
-
-		workItemsAsJSON, err := json.MarshalIndent(workItems, "", "  ")
-
-		if err != nil {
-			log.Fatal("Error converting work items to JSON: ", err.Error())
-		}
-
-		fmt.Println(string(workItemsAsJSON))
 	}
 }
