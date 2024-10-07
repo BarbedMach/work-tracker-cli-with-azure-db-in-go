@@ -142,7 +142,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			fmt.Printf("%d - Date: %s  Start: %s  End: %s  Desc: %s\n", item.ID, item.WorkDate, item.StartTime, item.EndTime, item.Description)
+			fmt.Printf("%04d - Date: %s  Start: %s  End: %s  Desc: %s\n", item.ID, item.WorkDate[0:10], item.StartTime[11:16], item.EndTime[11:16], item.Description)
 		}
 	}
 }
