@@ -6,24 +6,43 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
 	_ "github.com/microsoft/go-mssqldb"
 )
 
-var db *sql.DB
-var server = "REDACTED-server-1.database.windows.net"
-var port = 1433
-var user = "REDACTED"
-var password = "REDACTED"
-var database = "REDACTED"
+type Config struct {
+	ServerName   string `json:"SERVER_NAME"`
+	Port         int    `json:"PORT"`
+	UserName     string `json:"USER_NAME"`
+	UserPassword string `json:"USER_PASSWORD"`
+	DatabaseName string `json:"DATABASE_NAME"`
+}
 
 func main() {
-	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
-		server, user, password, port, database)
-
 	var err error
+
+	configJSON, err := os.Open("config.json")
+
+	if err != nil {
+		fmt.Println("Couldn't open the database config file: ", err.Error())
+	}
+
+	defer configJSON.Close()
+
+	byteValue, _ := io.ReadAll(configJSON)
+
+	var config Config
+
+	json.Unmarshal(byteValue, &config)
+
+	var db *sql.DB
+
+	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
+		config.ServerName, config.UserName, config.UserPassword, config.Port, config.DatabaseName)
+
 	db, err = sql.Open("sqlserver", connString)
 
 	if err != nil {
@@ -37,7 +56,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	workItemSchema, err := os.ReadFile("schemas/work_item.sql.")
+	workItemSchema, err := os.ReadFile("schemas/work_item.sql")
 
 	if err != nil {
 		log.Fatal("Error reading schema file: ", err.Error())
